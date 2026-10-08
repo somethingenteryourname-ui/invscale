@@ -161,7 +161,10 @@ public class InvScaleScreen extends Screen {
 		this.sidebarX = 6;
 		this.sidebarWidth = this.width >= 420 ? 96 : 82;
 		this.panelX = this.sidebarX + this.sidebarWidth + 6;
-		this.panelWidth = Mth.clamp(this.width - this.panelX - 6, 180, 300);
+		// Keep the panel left of the (vanilla-positioned) hotbar so the live HUD preview is never covered.
+		int clearOfHotbar = this.width / 2 - 91 - 8 - this.panelX;
+		int available = this.width - this.panelX - 6;
+		this.panelWidth = Mth.clamp(clearOfHotbar >= 230 ? Math.min(clearOfHotbar, available) : available, 180, 300);
 		this.panelTop = HEADER_HEIGHT + 6;
 		this.panelBottom = this.height - FOOTER_HEIGHT - 2;
 		this.viewTop = this.panelTop + 24;
@@ -338,6 +341,7 @@ public class InvScaleScreen extends Screen {
 
 	private CycleButton<Boolean> toggle(boolean initial, Consumer<Boolean> setter) {
 		return CycleButton.onOffBuilder(initial)
+				.displayOnlyValue()
 				.create(0, 0, 100, ROW_HEIGHT, Component.empty(), (button, value) -> {
 					setter.accept(value);
 					this.changed();

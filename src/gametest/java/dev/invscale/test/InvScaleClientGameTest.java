@@ -3,7 +3,10 @@ package dev.invscale.test;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 
+import org.lwjgl.glfw.GLFW;
+
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
@@ -19,6 +22,7 @@ import net.minecraft.world.item.Items;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.fabricmc.fabric.mixin.client.gametest.input.MouseHandlerAccessor;
 
 import dev.invscale.config.ConfigManager;
 import dev.invscale.config.HotbarAnchor;
@@ -112,10 +116,7 @@ public final class InvScaleClientGameTest implements FabricClientGameTest {
 		check(context.computeOnClient(client -> client.player.containerMenu.getCarried().isEmpty()), "cursor should be empty");
 
 		// Shift-click the golden apples (menu slot 37 = hotbar slot 1) into the main inventory.
-		context.getInput().holdShift();
-		clickSlot(context, 37);
-		context.getInput().releaseShift();
-		context.waitTicks(2);
+		shiftClickSlot(context, 37);
 		check(context.computeOnClient(client -> client.player.getInventory().getItem(1).isEmpty()), "shift-click should move hotbar slot 1");
 		check(context.computeOnClient(client -> client.player.getInventory().countItem(Items.GOLDEN_APPLE) == 16), "golden apples lost");
 
@@ -292,6 +293,22 @@ public final class InvScaleClientGameTest implements FabricClientGameTest {
 		moveToSlot(context, slotIndex);
 		context.waitTicks(1);
 		context.getInput().pressMouse(0);
+		context.waitTicks(3);
+	}
+
+	/**
+	 * Shift-click through the real mouse handler. The game test input API sends clicks without modifier keys, so
+	 * the shift modifier is passed explicitly, exactly like GLFW does for a real shift-click.
+	 */
+	private static void shiftClickSlot(ClientGameTestContext context, int slotIndex) {
+		moveToSlot(context, slotIndex);
+		context.waitTicks(1);
+		context.runOnClient(client -> {
+			MouseHandlerAccessor mouse = (MouseHandlerAccessor) client.mouseHandler;
+			long window = client.getWindow().handle();
+			mouse.invokeOnMouseButton(window, new MouseButtonInfo(0, GLFW.GLFW_MOD_SHIFT), GLFW.GLFW_PRESS);
+			mouse.invokeOnMouseButton(window, new MouseButtonInfo(0, GLFW.GLFW_MOD_SHIFT), GLFW.GLFW_RELEASE);
+		});
 		context.waitTicks(3);
 	}
 
