@@ -136,6 +136,11 @@ public class InvScaleScreen extends Screen {
 	private record DynamicLabel(Supplier<Component> text, int x, int contentY, int color, boolean alignRight) {
 	}
 
+	/** Makes the next opened settings screen start on the given tab. */
+	public static void selectCategory(Category category) {
+		lastCategory = category;
+	}
+
 	public InvScaleScreen(@Nullable Screen parent) {
 		super(Component.translatable("invscale.title"));
 		this.parent = parent;

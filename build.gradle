@@ -9,8 +9,23 @@ base {
 	archivesName = project.archives_base_name
 }
 
+sourceSets {
+	// In-game automated tests (run in a real client on CI). Never shipped in the mod jar.
+	gametest {
+		compileClasspath += main.compileClasspath + main.output
+		runtimeClasspath += main.runtimeClasspath + main.output
+	}
+}
+
 repositories {
 	// Loom adds the Minecraft, Fabric and Mojang repositories automatically.
+}
+
+configurations {
+	productionModsResolve {
+		transitive = true
+		canBeConsumed = false
+	}
 }
 
 dependencies {
@@ -18,6 +33,9 @@ dependencies {
 	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Production (intermediary) jars used to launch a real client for the game test.
+	productionModsResolve "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 }
 
 processResources {
@@ -59,4 +77,33 @@ jar {
 
 sourcesJar {
 	exclude 'com/terraformersmc/**'
+}
+
+// ------------------------------------------------------------------------------------------------ game test
+
+tasks.register('gametestJar', Jar) {
+	from sourceSets.gametest.output
+	archiveClassifier = 'gametest-dev'
+	destinationDirectory = layout.buildDirectory.dir('gametest')
+}
+
+tasks.register('remapGametestJar', net.fabricmc.loom.task.RemapJarTask) {
+	dependsOn tasks.gametestJar
+	inputFile = tasks.gametestJar.flatMap { it.archiveFile }
+	archiveClassifier = 'gametest'
+	destinationDirectory = layout.buildDirectory.dir('gametest')
+	addNestedDependencies = false
+	classpath.from(sourceSets.gametest.compileClasspath)
+}
+
+// Launches a real Minecraft 1.21.11 client (under xvfb on CI) with the final remapped InvScale jar,
+// Fabric API and the client game test API, runs InvScaleClientGameTest and exits.
+tasks.register('runProductionClientGameTest', net.fabricmc.loom.task.prod.ClientProductionRunTask) {
+	dependsOn tasks.remapJar, tasks.remapGametestJar
+	def fabricJars = configurations.productionModsResolve.filter { file ->
+		file.name.startsWith("fabric-api-") || file.name.startsWith("fabric-client-gametest-api-v1-")
+	}
+	mods.from(fabricJars, tasks.remapJar.archiveFile, tasks.remapGametestJar.archiveFile)
+	jvmArgs.add("-Dfabric.client.gametest")
+	jvmArgs.add("-Dfabric.client.gametest.disableNetworkSynchronizer=true")
 }

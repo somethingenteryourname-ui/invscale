@@ -1,0 +1,17 @@
+{
+	"schemaVersion": 1,
+	"id": "invscale-gametest",
+	"version": "1.0.0",
+	"name": "InvScale Client Game Test",
+	"description": "Automated in-game tests for InvScale. Not for players.",
+	"environment": "client",
+	"entrypoints": {
+		"fabric-client-gametest": [
+			"dev.invscale.test.InvScaleClientGameTest"
+		]
+	},
+	"depends": {
+		"invscale": "*",
+		"fabric-client-gametest-api-v1": "*"
+	}
+}
