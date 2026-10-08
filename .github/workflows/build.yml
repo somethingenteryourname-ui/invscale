@@ -34,7 +34,7 @@ jobs:
           echo "::notice title=Jar::$JAR ($(stat -c%s "$JAR") bytes)"
           unzip -p "$JAR" fabric.mod.json | python3 -c "import json,sys; d=json.load(sys.stdin); print('::notice title=fabric.mod.json valid::id=%s version=%s minecraft=%s env=%s depends=%s' % (d['id'], d['version'], d['depends']['minecraft'], d['environment'], ','.join(d['depends'])))"
           unzip -Z1 "$JAR" | grep -qx "dev/invscale/InvScaleClient.class"
-          unzip -Z1 "$JAR" | grep -qx "assets/invscale/lang/en_us.json"
+          unzip -p "$JAR" assets/invscale/lang/en_us.json | python3 -c "import json,sys; d=json.load(sys.stdin); print('::notice title=Language file valid::%d strings' % len(d))"
           if unzip -Z1 "$JAR" | grep -q "^com/terraformersmc"; then echo "::error::Mod Menu stubs leaked into jar"; exit 1; fi
           if unzip -Z1 "$JAR" | grep -q "dev/invscale/test"; then echo "::error::Game test leaked into jar"; exit 1; fi
           # Mixin targets must be remapped to intermediary names in the production jar.
