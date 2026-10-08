@@ -23,7 +23,9 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build
-        run: ./gradlew build remapGametestJar --stacktrace
+        run: |
+          set -o pipefail
+          ./gradlew build remapGametestJar --stacktrace 2>&1 | tee build.log
 
       - name: Verify jar
         run: |
@@ -46,7 +48,8 @@ jobs:
       - name: Run InvScale inside a real Minecraft 1.21.11 client
         run: |
           mkdir -p run && echo "eula=true" > run/eula.txt
-          ./gradlew runProductionClientGameTest --stacktrace
+          set -o pipefail
+          ./gradlew runProductionClientGameTest --stacktrace 2>&1 | tee gametest.log
 
       - name: Publish test screenshots
         if: always() && github.event_name == 'push'
@@ -61,6 +64,19 @@ jobs:
           git add -A && git commit -qm "Screenshots from ${GITHUB_SHA}" || exit 0
           git push -qf "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" ci-screenshots
           echo "::notice title=Screenshots::$(ls | tr '\n' ' ')"
+
+      - name: Publish logs
+        if: always() && github.event_name == 'push'
+        run: |
+          rm -rf /tmp/logs && mkdir /tmp/logs
+          cp build.log gametest.log /tmp/logs/ 2>/dev/null || true
+          cp run/logs/latest.log /tmp/logs/client-latest.log 2>/dev/null || true
+          cd /tmp/logs
+          git init -q -b ci-logs
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A && git commit -qm "Logs from ${GITHUB_SHA}" || exit 0
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" ci-logs
 
       - name: Upload jar
         if: always()
