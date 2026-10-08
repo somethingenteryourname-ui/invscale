@@ -89,7 +89,7 @@ tasks.register('gametestJar', Jar) {
 
 tasks.register('remapGametestJar', net.fabricmc.loom.task.RemapJarTask) {
 	dependsOn tasks.gametestJar
-	inputFile = tasks.gametestJar.flatMap { it.archiveFile }
+	inputFile = tasks.named("gametestJar", Jar).flatMap { it.archiveFile }
 	archiveClassifier = 'gametest'
 	destinationDirectory = layout.buildDirectory.dir('gametest')
 	addNestedDependencies = false
