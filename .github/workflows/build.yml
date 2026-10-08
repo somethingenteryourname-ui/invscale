@@ -1,0 +1,35 @@
+name: build
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'microsoft'
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+      - name: Build
+        run: ./gradlew build --stacktrace
+      - name: Verify jar
+        run: |
+          set -e
+          JAR=$(ls build/libs/*.jar | grep -v sources)
+          echo "Built: $JAR"
+          unzip -p "$JAR" fabric.mod.json | python3 -c "import json,sys; d=json.load(sys.stdin); print('fabric.mod.json OK:', d['id'], d['version'], d['depends']['minecraft'])"
+          unzip -l "$JAR" | grep -q "dev/invscale/InvScaleClient.class"
+          unzip -l "$JAR" | grep -q "invscale.mixins.json"
+          unzip -l "$JAR" | grep -q "invscale-refmap.json"
+          if unzip -l "$JAR" | grep -q "com/terraformersmc"; then echo "Mod Menu stubs leaked into jar"; exit 1; fi
+      - name: Upload jar
+        uses: actions/upload-artifact@v7
+        with:
+          name: InvScale
+          path: build/libs/

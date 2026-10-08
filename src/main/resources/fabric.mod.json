@@ -1,0 +1,48 @@
+{
+	"schemaVersion": 1,
+	"id": "invscale",
+	"version": "${version}",
+	"name": "InvScale",
+	"description": "Independent, precise scaling for the hotbar, inventory, container screens and every major HUD element - without touching Minecraft's global GUI Scale. Client-side only, built for PvP.",
+	"authors": [
+		"InvScale"
+	],
+	"contact": {
+		"homepage": "https://github.com/somethingenteryourname-ui/invscale",
+		"sources": "https://github.com/somethingenteryourname-ui/invscale",
+		"issues": "https://github.com/somethingenteryourname-ui/invscale/issues"
+	},
+	"license": "MIT",
+	"icon": "assets/invscale/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"dev.invscale.InvScaleClient"
+		],
+		"modmenu": [
+			"dev.invscale.compat.ModMenuIntegration"
+		]
+	},
+	"mixins": [
+		{
+			"config": "invscale.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.17.3",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"modmenu": "*"
+	},
+	"custom": {
+		"modmenu": {
+			"links": {
+				"modmenu.github_releases": "https://github.com/somethingenteryourname-ui/invscale/releases"
+			}
+		}
+	}
+}
