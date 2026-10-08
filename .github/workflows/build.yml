@@ -22,13 +22,17 @@ jobs:
         run: |
           set -e
           JAR=$(ls build/libs/*.jar | grep -v sources)
-          echo "Built: $JAR"
-          unzip -p "$JAR" fabric.mod.json | python3 -c "import json,sys; d=json.load(sys.stdin); print('fabric.mod.json OK:', d['id'], d['version'], d['depends']['minecraft'])"
-          unzip -l "$JAR" | grep -q "dev/invscale/InvScaleClient.class"
-          unzip -l "$JAR" | grep -q "invscale.mixins.json"
-          unzip -l "$JAR" | grep -q "invscale-refmap.json"
-          if unzip -l "$JAR" | grep -q "com/terraformersmc"; then echo "Mod Menu stubs leaked into jar"; exit 1; fi
+          echo "::notice title=Jar::$JAR ($(stat -c%s "$JAR") bytes)"
+          echo "::notice title=Jar root::$(unzip -Z1 "$JAR" | grep -v / | tr '\n' ' ')"
+          unzip -p "$JAR" fabric.mod.json | python3 -c "import json,sys; d=json.load(sys.stdin); print('::notice title=fabric.mod.json valid::id=%s version=%s minecraft=%s env=%s' % (d['id'], d['version'], d['depends']['minecraft'], d['environment']))"
+          echo "::notice title=Mixin config::$(unzip -p "$JAR" invscale.mixins.json | tr -d '\n\t')"
+          REFMAP=$(unzip -p "$JAR" invscale.mixins.json | python3 -c "import json,sys; print(json.load(sys.stdin).get('refmap',''))")
+          test -n "$REFMAP" && unzip -Z1 "$JAR" | grep -qx "$REFMAP"
+          echo "::notice title=Refmap::$REFMAP present, $(unzip -p "$JAR" "$REFMAP" | python3 -c "import json,sys; m=json.load(sys.stdin)['mappings']; print(len(m),'mixins mapped:', ', '.join(k.split('/')[-1] for k in m))")"
+          unzip -Z1 "$JAR" | grep -qx "dev/invscale/InvScaleClient.class"
+          if unzip -Z1 "$JAR" | grep -q "^com/terraformersmc"; then echo "::error::Mod Menu stubs leaked into jar"; exit 1; fi
       - name: Upload jar
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: InvScale
