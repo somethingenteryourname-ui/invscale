@@ -147,7 +147,7 @@
 	"invscale.screen.creative_inventory": "Creative Inventory",
 	"invscale.screen.chest": "Chest",
 	"invscale.screen.large_chest": "Large Chest",
-	"invscale.screen.chest_other": "Barrel / Ender / Other",
+	"invscale.screen.chest_other": "Barrel "invscale.screen.chest_other": "Barrel / Ender / Other" Ender",
 	"invscale.screen.shulker_box": "Shulker Box",
 	"invscale.screen.crafting_table": "Crafting Table",
 	"invscale.screen.crafter": "Crafter",
